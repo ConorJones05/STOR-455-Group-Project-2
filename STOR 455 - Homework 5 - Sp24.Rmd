@@ -2,6 +2,7 @@
 title: 'STOR 455 Homework #5'
 subtitle: 40 points - Due Wednesday 3/20 at 5:00pm
 geometry: margin = 2.25cm
+author: 'Group 10'
 output:
   pdf_document: default
 ---
@@ -12,6 +13,14 @@ __Situation:__ Can we predict the selling price of a house in Ames, Iowa based o
 
 #### Part 7. Cross-validation: ####
 In some situations, a model might fit the peculiarities of a specific sample of data well, but not reflect structure that is really present in the population. A good test for how your model might work on "real" house prices can be simulated by seeing how well your fitted model does at predicting prices that were NOT in your original sample. This is why we reserved an additional 200 cases as a holdout sample in AmesTest??.csv. Use the group number and AmesTest??.csv corresponding to your group number for homework #3. Import your holdout test data and 
+
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+
+ames_train <- read_csv("AmesTrain10.csv")
+ames_test <- read_csv("AmesTest10.csv")
+```
+
 
 * Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
 
