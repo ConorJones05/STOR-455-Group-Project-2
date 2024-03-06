@@ -24,16 +24,54 @@ ames_test <- read_csv("AmesTest10.csv")
 
 * Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
 
+```{r}
+basic_mod <- lm(formula = Price ~ LotFrontage + LotArea + Quality + Condition + 
+    YearBuilt + YearRemodel + BasementFinSF + BasementSF + GroundSF + 
+    FullBath + Bedroom + Fireplaces + GarageSF + 
+    ScreenPorchSF, data = ames_train)
+
+test_price <- predict(basic_mod, newdata = ames_test)
+```
+
+
 * Compute the residuals for the 200 holdout cases.
+
+```{r}
+test_resid <- test_price - ames_test$Price
+```
+
 
 * Compute the mean and standard deviation of these residuals. Are they close to what you expect from the training model?
 
+```{r}
+mean(test_resid)
+sd(test_resid)
+
+sd(basic_mod$residuals)
+```
+
 * Construct a plot of the residuals to determine if they are normally distributed. Is this plot what you expect to see considering the training model?
+
+```{r}
+hist(test_resid, breaks=20)
+qqnorm(test_resid)
+qqline(test_resid)
+```
 
 * Are any holdout cases especially poorly predicted by the training model? If so, identify by the row number(s) in the holdout data. Why might these cases be poorly predicted?
 
+```{r}
+head(sort(abs(test_resid), decreasing = TRUE))
+```
+
+
 * Compute the correlation between the predicted values and actual prices for the holdout sample. This is known as the cross-validation correlation. We don’t expect the training model to do better at predicting values different from those that were used to build it (as reflected in the original $R^{2}$), but an effective model shouldn’t do a lot worse at predicting the holdout values. Square the cross-validation correlation to get an $R^{2}$ value and subtract it from the original multiple $R^{2}$ of the training sample. This is known as the shrinkage. We won’t have specific rules about how little the shrinkage should be, but give an opinion on whether the shrinkage looks OK to you or too large in your situation. 
 
+```{r}
+cross_cor <- cor(ames_test$Price, test_price)
+
+summary(basic_mod)$r.squared - cross_cor^2
+```
 
 #### Part 8. Find a “fancy model”: #### 
 Again using AmesTrain??.csv, where ?? corresponds to your new group number in homework #5, to build a regression model to predict Price. In addition to the quantitative predictors, you may now consider models with
