@@ -2,7 +2,6 @@
 title: 'STOR 455 Homework #5'
 subtitle: 40 points - Due Wednesday 3/20 at 5:00pm
 geometry: margin = 2.25cm
-author: 'Group 10'
 output:
   pdf_document: default
 ---
@@ -14,25 +13,57 @@ __Situation:__ Can we predict the selling price of a house in Ames, Iowa based o
 #### Part 7. Cross-validation: ####
 In some situations, a model might fit the peculiarities of a specific sample of data well, but not reflect structure that is really present in the population. A good test for how your model might work on "real" house prices can be simulated by seeing how well your fitted model does at predicting prices that were NOT in your original sample. This is why we reserved an additional 200 cases as a holdout sample in AmesTest??.csv. Use the group number and AmesTest??.csv corresponding to your group number for homework #3. Import your holdout test data and 
 
-```{r message = FALSE, warning = FALSE}
+* Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
+```{r}
 library(tidyverse)
 
-ames_train <- read_csv("AmesTrain10.csv")
-ames_test <- read_csv("AmesTest10.csv")
+AmesData <- read.csv('AmesTrain3.csv')
+
+AmesData1 <- select(AmesData, is.numeric)
+
+holdout <- read.csv('AmesTest10.csv')
+
+reducedmodel1 <- lm(formula = Price ~ Quality + GroundSF + BasementFinSF + BasementSF + 
+    LotArea + YearBuilt + GarageSF + YearRemodel + Bedroom + 
+    LotFrontage + FullBath + Condition, data = AmesData1)
+
+test_data <- predict(reducedmodel1, new_data = holdout)
+```
+
+* Compute the residuals for the 200 holdout cases.
+```{r}
+test_resid <- holdout$Price - test_data
 ```
 
 
-* Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
-
-* Compute the residuals for the 200 holdout cases.
-
 * Compute the mean and standard deviation of these residuals. Are they close to what you expect from the training model?
+
+```{r}
+mean(test_resid)
+sd(test_resid)
+```
+
 
 * Construct a plot of the residuals to determine if they are normally distributed. Is this plot what you expect to see considering the training model?
 
+```{r}
+qqnorm(test_resid)
+qqline(test_resid)
+```
+
+
 * Are any holdout cases especially poorly predicted by the training model? If so, identify by the row number(s) in the holdout data. Why might these cases be poorly predicted?
+```{r}
+sort(abs(test_resid), decreasing = TRUE)[1:5]
+```
 
 * Compute the correlation between the predicted values and actual prices for the holdout sample. This is known as the cross-validation correlation. We don’t expect the training model to do better at predicting values different from those that were used to build it (as reflected in the original $R^{2}$), but an effective model shouldn’t do a lot worse at predicting the holdout values. Square the cross-validation correlation to get an $R^{2}$ value and subtract it from the original multiple $R^{2}$ of the training sample. This is known as the shrinkage. We won’t have specific rules about how little the shrinkage should be, but give an opinion on whether the shrinkage looks OK to you or too large in your situation. 
+
+```{r}
+summary(reducedmodel1)$r.squared - cor(holdout$Price,test_data)^2
+
+```
+
 
 
 #### Part 8. Find a “fancy model”: #### 
