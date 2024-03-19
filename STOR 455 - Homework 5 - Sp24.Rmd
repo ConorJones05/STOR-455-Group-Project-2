@@ -145,10 +145,10 @@ DoublenewNewAmesTrain <- NewAmesTrain_wfactor
 DoublenewNewAmesTrain <- DoublenewNewAmesTrain %>%
   mutate(Price = log(Price),
          LotArea = log(LotArea),
-         age_built = I(age_built)^2,
-         age_built = I(age_built)^2,
-         GarageCars = I(GarageCars^2),
-         GarageSF = I(GarageSF^2))
+         age_built2 = I(age_built)^2,
+         age_built2 = I(age_built)^2,
+         GarageCars2 = I(GarageCars^2),
+         GarageSF2 = I(GarageSF^2))
 
 
 first_model <-lm(Price ~ . + Quality * Condition + TotalRooms * Bedroom + LotArea * LotFrontage + GarageSF * GarageCars, data = DoublenewNewAmesTrain)
