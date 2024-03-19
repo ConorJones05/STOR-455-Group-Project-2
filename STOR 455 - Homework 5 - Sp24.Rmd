@@ -89,17 +89,37 @@ NewAmesTrain_wfactor$Condition <- factor(NewAmesTrain_wfactor$Condition)
 
 full_wfactor <- lm(Price ~ ., data=NewAmesTrain_wfactor)
 summary(full_wfactor)
-
-
-
+plot(Price ~ ., data=NewAmesTrain_wfactor)
 ```
 
 
 * Transformations of predictors -  You can include functions of quantitative predictors. Probably best to use the I( ) notation so you don’t need to create new columns when you run the predictions for the test data. 
 
+```{r}
+
+```
+
+
 * Transformations of the response - You might address curvature or skewness in residual plots by transforming the response prices with a function like log(Price), sqrt(Price), Price^2, etc..  These should generally not need the I( ) notation to make these adjustments. IMPORTANT: If you transform Price, be sure to reverse the transformation when making final predictions!
 
+
+
 * Combinations of variables - This might include interactions or other combinations. You do not need the I( ) notation when making an interaction using a categorical predictor (e.g.  GroundSF*CentralAir).
+```{r}
+#full_wfactor2 <- lm(Price ~ . + .^2, data=NewAmesTrain_wfactor)
+
+```
+
+```{r}
+#MSE2 <- (summary(full_wfactor2)$sigma)^2
+#AmesModNone2 <- na.omit(AmesModNone2)
+
+#AmesModNone2 <- lm(Price ~ 1, data = NewAmesTrain_wfactor)
+#simple_model2 <- step(AmesModNone2, scale = MSE2, scope = list(upper = full_wfactor2), trace = FALSE)
+
+#summary(simple_model2)
+```
+
 
 Keep general track of the approaches you try and explain what guides your decisions as you select a new set of predictors (but again you don’t need to give full details of every model you consider). Along the way you should consider some residual analysis. 
 
@@ -118,6 +138,21 @@ Notes/Tips:
 * I should be able to follow the steps you use when selecting a model. I certainly don’t need to see every bit of output, but it might help to include more of the R commands you use. For example, saying you used backward elimination is not very helpful when I don’t know what you start with for the full model or pool of predictors (e.g. did you include Condition and Quality as numeric predictors? or did you decide to eliminate one of GroundSF, FirstSF, or SecondSF due to redundancy?). The easiest way to convey this in many cases is to show the R command you used. It is fine to abbreviate the output (for example, delete many steps in a stepwise procedure using trace=FALSE), but it would be helpful if you identified the parts you do include.  For example, a sentence like “After 12 steps of the stepwise procedure, we have the output below for the fitted model.”  Similarly, I don’t need to see 600 residuals, using head and sort can show the important ones.
 
 * Once you have settled on a response, made adjustments to the data (if needed), and chosen a set of predictors, be sure to include the summary( )for your “fancy” model at this stage. 
+```{r}
+DoublenewNewAmesTrain <- NewAmesTrain_wfactor
+
+
+DoublenewNewAmesTrain <- DoublenewNewAmesTrain %>%
+  mutate(Price = log(Price),
+         LotArea = log(LotArea),
+         age_built = I(age_built)^2,
+         age_built = I(age_built)^2,
+         GarageCars = I(GarageCars^2),
+         GarageSF = I(GarageSF^2))
+
+
+first_model <-lm(Price ~ . + Quality * Condition + TotalRooms * Bedroom + LotArea * LotFrontage + GarageSF * GarageCars, data = DoublenewNewAmesTrain)
+```
 
 #### Part 9: Cross-validation for your “fancy” model ####
     
