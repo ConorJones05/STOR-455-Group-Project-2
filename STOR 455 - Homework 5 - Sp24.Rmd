@@ -15,6 +15,7 @@ In some situations, a model might fit the peculiarities of a specific sample of 
 
 * Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
 ```{r}
+setwd("C:/Users/conor/Downloads")
 library(tidyverse)
 
 AmesData <- read.csv('AmesTrain3.csv')
@@ -144,15 +145,19 @@ DoublenewNewAmesTrain <- NewAmesTrain_wfactor
 
 DoublenewNewAmesTrain <- DoublenewNewAmesTrain %>%
   mutate(Price = log(Price),
-         LotArea = log(LotArea),
-         age_built2 = I(age_built)^2,
-         age_built2 = I(age_built)^2,
-         GarageCars2 = I(GarageCars^2),
-         GarageSF2 = I(GarageSF^2))
+         LotArea = log(LotArea))
 
 
-first_model <-lm(Price ~ . + Quality * Condition + TotalRooms * Bedroom + LotArea * LotFrontage + GarageSF * GarageCars, data = DoublenewNewAmesTrain)
+first_model <-lm(Price ~ . + I(age_built^2) + I(GarageCars^2)+ I(GarageSF^2)+ TotalRooms * Bedroom + LotArea * LotFrontage + GarageSF * GarageCars, data = DoublenewNewAmesTrain)
 ```
+```{r}
+MSE2 <- (summary(first_model)$sigma)^2
+AmesModNone2 <- lm(Price ~ 1, NewAmesTrain_wfactor)
+simple_model2 <- step(AmesModNone2, scale = MSE2, scope = list(upper = first_model), trace = FALSE)
+summary(simple_model2)
+
+```
+
 
 #### Part 9: Cross-validation for your “fancy” model ####
     
