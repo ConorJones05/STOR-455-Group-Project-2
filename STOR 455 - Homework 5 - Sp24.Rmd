@@ -21,13 +21,13 @@ AmesData <- read.csv('AmesTrain3.csv')
 
 AmesData1 <- select(AmesData, is.numeric)
 
-holdout <- read.csv('AmesTest10.csv')
+holdout <- read.csv('AmesTest3.csv')
 
 reducedmodel1 <- lm(formula = Price ~ Quality + GroundSF + BasementFinSF + BasementSF + 
     LotArea + YearBuilt + GarageSF + YearRemodel + Bedroom + 
     LotFrontage + FullBath + Condition, data = AmesData1)
 
-test_data <- predict(reducedmodel1, new_data = holdout)
+test_data <- predict(reducedmodel1, newdata = holdout)
 ```
 
 * Compute the residuals for the 200 holdout cases.
@@ -64,12 +64,36 @@ summary(reducedmodel1)$r.squared - cor(holdout$Price,test_data)^2
 
 ```
 
-
-
 #### Part 8. Find a “fancy model”: #### 
 Again using AmesTrain??.csv, where ?? corresponds to your new group number in homework #5, to build a regression model to predict Price. In addition to the quantitative predictors, you may now consider models with
 
+```{r}
+NewAmesTrain <- read.csv('AmesTest10.csv', stringsAsFactors = TRUE)
+NewAmesTrain <- na.omit(NewAmesTrain)
+NewAmesTrain <- NewAmesTrain[-1] 
+age_built <- 2010 - NewAmesTrain$YearBuilt
+age_remodel <- 2010 - NewAmesTrain$YearRemodel
+
+full <- lm(Price ~ ., data=NewAmesTrain)
+summary(full)
+
+```
+
+
 * Categorical variables - Just put these in the model and let R take care of making the indicator predictors (and picking one category to leave out). Use factor( ) to treat a numeric variable as categorical. You’ll see the coefficients for each indicator when you look at the summary( ) and they will be grouped together in the ANOVA. Be careful, since adding a single categorical variable with a lot of categories might actually be adding a lot of new indicator terms.
+
+```{r}
+NewAmesTrain_wfactor <- NewAmesTrain
+NewAmesTrain_wfactor$Quality <- factor(NewAmesTrain_wfactor$Quality)
+NewAmesTrain_wfactor$Condition <- factor(NewAmesTrain_wfactor$Condition)
+
+full_wfactor <- lm(Price ~ ., data=NewAmesTrain_wfactor)
+summary(full_wfactor)
+
+
+
+```
+
 
 * Transformations of predictors -  You can include functions of quantitative predictors. Probably best to use the I( ) notation so you don’t need to create new columns when you run the predictions for the test data. 
 
