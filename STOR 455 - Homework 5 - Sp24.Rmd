@@ -53,17 +53,17 @@ sd(basic_mod$residuals)
 * Construct a plot of the residuals to determine if they are normally distributed. Is this plot what you expect to see considering the training model?
 
 ```{r}
-hist(test_resid, breaks=20)
-qqnorm(test_resid)
+qqnorm(test_resid, main = "Test Residuals")
 qqline(test_resid)
+
+plot(basic_mod, 2, main = "Training Residuals")
 ```
 
 * Are any holdout cases especially poorly predicted by the training model? If so, identify by the row number(s) in the holdout data. Why might these cases be poorly predicted?
 
 ```{r}
-head(sort(abs(test_resid), decreasing = TRUE))
+head(sort(abs(test_resid)/sd(test_resid), decreasing = TRUE))
 ```
-
 
 * Compute the correlation between the predicted values and actual prices for the holdout sample. This is known as the cross-validation correlation. We don’t expect the training model to do better at predicting values different from those that were used to build it (as reflected in the original $R^{2}$), but an effective model shouldn’t do a lot worse at predicting the holdout values. Square the cross-validation correlation to get an $R^{2}$ value and subtract it from the original multiple $R^{2}$ of the training sample. This is known as the shrinkage. We won’t have specific rules about how little the shrinkage should be, but give an opinion on whether the shrinkage looks OK to you or too large in your situation. 
 
@@ -102,6 +102,23 @@ Notes/Tips:
 
 * Once you have settled on a response, made adjustments to the data (if needed), and chosen a set of predictors, be sure to include the summary( )for your “fancy” model at this stage. 
 
+```{r}
+plot(Price ~ ., data = select(ames_train, where(is.numeric)))
+```
+log(LotArea)
+YearBuilt^2 or YearRemodel^2
+GarageSF^2
+GarageCars^2
+log(TotalRooms)
+GroundSF^2
+
+price
+
+```{r}
+
+```
+
+
 #### Part 9: Cross-validation for your “fancy” model ####
     
 Redo the cross-validation analysis with your test data for your new fancy model. Use AmesTest??.csv, where ?? corresponds to your new group number for homework #5. Discuss how the various measures (mean of residuals, std. dev of residuals, shape of the distributions of residuals, cross-validation correlation, and shrinkage) compare to the results you had for your basic model.  Don’t worry about looking for poorly predicted cases this time. If you transformed the response variable, consider how to take this into account for your residual analysis. In order to compare residuals they should have the same units!
@@ -114,6 +131,8 @@ Note on missing categories:
   
 >This occurs because the holdout sample has a value for the categorical variable that was not present in your training sample, so there is no indicator in your model to handle that case. To get a prediction for that house, you’ll need to switch the category to one that is in your training data.  In the example above you might choose to replace the “2.5Fin” house style with “2Story”. If you are not sure what category to use, try whatever R uses as the “left out” reference category. Be sure to record any changes like this that you make.
 
+
+
 #### Part 10. Final Model ####  
 
 Again, you may choose to make some additional adjustments to your model after considering the final residual analysis. If you do so, please explain what (and why) you did and provide the summary() for your new final model.
@@ -121,3 +140,51 @@ Again, you may choose to make some additional adjustments to your model after co
 Suppose that you are interested in a house in Ames that has the characteristics listed below. Construct a 95% confidence interval for the mean price of such houses.
 
 A 2 story 11 room home, built in 1987 and remodeled in 1999 on a 21540 sq. ft. lot with 328 feet of road frontage. Overall quality is good (7) and condition is average (5). The quality and condition of the exterior are both good (Gd) and it has a poured concrete foundation. There is an 757 sq. foot basement that has excellent height, but is completely unfinished and has no bath facilities. Heating comes from a gas air furnace that is in excellent condition and there is central air conditioning. The house has 2432 sq. ft. of living space above ground, 1485 on the first floor and 947 on the second, with 4 bedrooms, 2 full and one half baths, and 1 fireplace. The 2 car, built-in garage has 588 sq. ft. of space and is average (TA) for both quality and construction. The only porches or decks is a 205 sq. ft. open porch in the front. 
+
+```{r}
+house_ex <- data.frame(
+  Order = 0,
+  Price = 0,
+  LotFrontage = 328,
+  LotArea = 21540,
+  LotConfig = NA,
+  HouseStyle = "2Story",
+  Quality = 7,
+  Condition = 5,
+  YearBuilt = 1987,
+  YearRemodel = 1999,
+  ExteriorQ = "Gd",
+  ExteriorC = "Gd",
+  Foundation = "PConc",
+  BasementHt = "Ex",
+  BasementC = "None",
+  BasementFin = "Unf",
+  BasementFinSF = 0,
+  BasementUnFinSF = 757,
+  BasementSF = 757,
+  Heating = "GasA",
+  HeatingQC = "Ex",
+  CentralAir = "Y",
+  FirstSF = 1485,
+  SecondSF = 947,
+  GroundSF = 2432,
+  BasementFBath = 0,
+  BasementHBath = 0,
+  FullBath = 2,
+  HalfBath = 1,
+  Bedroom = 4,
+  KitchenQ = NA,
+  TotalRooms = 11,
+  Fireplaces = 1,
+  GarageType = "BuiltIn",
+  GarageCars = 2,
+  GarageSF = 588,
+  GarageQ = "TA",
+  GarageC = "TA",
+  WoodDeckSF = 0,
+  OpenPorchSF = 205,
+  EnclosedPorchSF = 0,
+  ScreenPorchSF = 0
+)
+```
+
