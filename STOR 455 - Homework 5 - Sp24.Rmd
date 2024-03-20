@@ -93,18 +93,44 @@ summary(simple_model)
 #### Part 9: Cross-validation for your “fancy” model
 
 ```{r}
-ames10_holdout <- read.csv('AmesTest10.csv')
+ames10_holdout <- read.csv('AmesTest10.csv', stringsAsFactors = TRUE)
+ames10_holdout <- na.omit(ames10_holdout)
+ames10_holdout <- ames10_holdout[-1] 
+ames10_holdout$age_built <- 2010 - ames10_holdout$YearBuilt
+ames10_holdout$age_remodel <- 2010 - ames10_holdout$YearRemodel
 ames10_holdout$Quality <- factor(ames10_holdout$Quality)
 ames10_holdout$Condition <- factor(ames10_holdout$Condition)
 ```
+
+
+When trying to predict on the test dataset we were getting errors because the test set contained 0 for BasementHt and BasementC.
+We changed these to "None" becuase we assumed that is what they represent.
+```{r}
+ames10_holdout$BasementHt <- as.character(ames10_holdout$BasementHt) 
+ames10_holdout$BasementHt[ames10_holdout$BasementHt == "0"] <- "None"
+unique(ames10_holdout$BasementHt)
+ames10_holdout$BasementC <- as.character(ames10_holdout$BasementC) 
+ames10_holdout$BasementC[ames10_holdout$BasementC == "0"] <- "None"
+unique(ames10_holdout$BasementC)
+```
+
+Some of our transformations were applied to the training dataset. So to make sure our predictions are properly implemented we must transform the test data first.
+
+```{r}
+ames10_holdout_adjusted <- ames10_holdout %>%
+  mutate(Price = log(Price),
+         LotArea = log(LotArea))
+```
+
 
 We will compute the predicted Price for each of the cases in the holdout
 test sample, using our new model.
 
 ```{r}
-predictions <- predict(simple_model, newdata = ames10_holdout)
+predictions <- predict(simple_model, newdata = ames10_holdout_adjusted)
 head(predictions)
 ```
+
 
 As in part 7 we will compute the residuals for the 200 holdout cases.
 
@@ -151,11 +177,12 @@ Now subtract it from the original multiple $R^{2}$ of the training
 sample to find the shrinkage.
 
 ```{r}
-summary(simple_model2)$r.squared - cor(predictions, ames10_holdout$Price)^2
+summary(simple_model)$r.squared - cor(predictions, ames10_holdout$Price)^2
 ```
 
 The shrinkage is very small so it appears we are not over fitting our
 training data.
+
 
 #### Part 10. Final Model ####  
 
