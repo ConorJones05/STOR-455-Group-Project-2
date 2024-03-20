@@ -191,3 +191,74 @@ Again, you may choose to make some additional adjustments to your model after co
 Suppose that you are interested in a house in Ames that has the characteristics listed below. Construct a 95% confidence interval for the mean price of such houses.
 
 A 2 story 11 room home, built in 1987 and remodeled in 1999 on a 21540 sq. ft. lot with 328 feet of road frontage. Overall quality is good (7) and condition is average (5). The quality and condition of the exterior are both good (Gd) and it has a poured concrete foundation. There is an 757 sq. foot basement that has excellent height, but is completely unfinished and has no bath facilities. Heating comes from a gas air furnace that is in excellent condition and there is central air conditioning. The house has 2432 sq. ft. of living space above ground, 1485 on the first floor and 947 on the second, with 4 bedrooms, 2 full and one half baths, and 1 fireplace. The 2 car, built-in garage has 588 sq. ft. of space and is average (TA) for both quality and construction. The only porches or decks is a 205 sq. ft. open porch in the front. 
+
+
+```{r}
+new_house_ex <- data.frame(
+  Order = 0,
+  Price = 0,
+  LotFrontage = 328,
+  LotArea = 21540,
+  LotConfig = NA,
+  HouseStyle = "2Story",
+  Quality = 7,
+  Condition = 5,
+  YearBuilt = 1987,
+  YearRemodel = 1999,
+  age_built = 2010 - 1987,
+  age_remodel = 2010 - 1999,
+  ExteriorQ = "Gd",
+  ExteriorC = "Gd",
+  Foundation = "PConc",
+  BasementHt = "Ex",
+  BasementC = "None",
+  BasementFin = "Unf",
+  BasementFinSF = 0,
+  BasementUnFinSF = 757,
+  BasementSF = 757,
+  Heating = "GasA",
+  HeatingQC = "Ex",
+  CentralAir = "Y",
+  FirstSF = 1485,
+  SecondSF = 947,
+  GroundSF = 2432,
+  BasementFBath = 0,
+  BasementHBath = 0,
+  FullBath = 2,
+  HalfBath = 1,
+  Bedroom = 4,
+  KitchenQ = NA,
+  TotalRooms = 11,
+  Fireplaces = 1,
+  GarageType = "BuiltIn",
+  GarageCars = 2,
+  GarageSF = 588,
+  GarageQ = "TA",
+  GarageC = "TA",
+  WoodDeckSF = 0,
+  OpenPorchSF = 205,
+  EnclosedPorchSF = 0,
+  ScreenPorchSF = 0
+)
+
+house_ex <- data.frame(new_house_ex, stringsAsFactors = TRUE)
+house_ex <- house_ex[-1] 
+house_ex$age_built <- 2010 - house_ex$YearBuilt
+house_ex$age_remodel <- 2010 - house_ex$YearRemodel
+house_ex$Quality <- factor(house_ex$Quality)
+house_ex$Condition <- factor(house_ex$Condition)
+house_ex$LotArea <- log(house_ex$LotArea)
+house_ex
+```
+```{r}
+predict.lm(simple_model, house_ex, interval = 'confidence', level = .95)
+exp(predict.lm(simple_model, house_ex, interval = 'confidence', level = .95))
+```
+We predict but this gives us a value of log(price) so we can take exp() to make it in thousands of dollars.
+We can say with 95% confidence that the mean value of homes with above characteristics falls between 228 and 276 thousand dollars.
+
+
+
+
+
+
