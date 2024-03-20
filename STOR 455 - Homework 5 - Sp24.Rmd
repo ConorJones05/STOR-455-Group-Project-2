@@ -145,15 +145,74 @@ summary(simple_model)
 
 #### Part 9: Cross-validation for your “fancy” model ####
     
-Redo the cross-validation analysis with your test data for your new fancy model. Use AmesTest??.csv, where ?? corresponds to your new group number for homework #5. Discuss how the various measures (mean of residuals, std. dev of residuals, shape of the distributions of residuals, cross-validation correlation, and shrinkage) compare to the results you had for your basic model.  Don’t worry about looking for poorly predicted cases this time. If you transformed the response variable, consider how to take this into account for your residual analysis. In order to compare residuals they should have the same units!
+```{r}
+ames10_holdout <- read.csv('AmesTest10.csv')
+ames10_holdout$Quality <- factor(ames10_holdout$Quality)
+ames10_holdout$Condition <- factor(ames10_holdout$Condition)
+```
 
-Note on missing categories:
+We will compute the predicted Price for each of the cases in the holdout
+test sample, using our new model.
 
->When creating the predictions using predict(yourmodel,AmesTest) you may see an error like:  
+```{r}
+predictions <- predict(simple_model2, newdata = ames10_holdout)
+head(predictions)
+```
 
->Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) :   factor HouseStyle has new levels 1.5Unf, 2.5Fin, 2.5Unf  
-  
->This occurs because the holdout sample has a value for the categorical variable that was not present in your training sample, so there is no indicator in your model to handle that case. To get a prediction for that house, you’ll need to switch the category to one that is in your training data.  In the example above you might choose to replace the “2.5Fin” house style with “2Story”. If you are not sure what category to use, try whatever R uses as the “left out” reference category. Be sure to record any changes like this that you make.
+As in part 7 we will compute the residuals for the 200 holdout cases.
+
+```{r}
+holdout_resid <- log(ames10_holdout$Price) - predictions
+```
+
+And find the mean and standard deviation of these residuals.
+
+```{r}
+mean(holdout_resid)
+sd(holdout_resid)
+```
+
+The mean value of our residuals is incredibly close to zero which is
+ideal. The standard deviation of .0766 seems very low but this is in terms of
+log(Price) which is much smaller than price.
+
+
+We will construct a plot to determine if they are normally distributed.
+
+```{r}
+qqnorm(holdout_resid)
+qqline(holdout_resid)
+```
+
+The residuals appear much more normally distributed than in previous models. 
+There are potentially one or two extreme points.
+
+
+Compute the correlation between the predicted values and actual prices
+for the holdout sample. This is known as the cross-validation
+correlation.
+
+```{r}
+cor(predictions, ames10_holdout$Price)
+cor(predictions, log(ames10_holdout$Price))
+```
+
+Square the cross-validation correlation to get an $R^{2}$ value.
+
+```{r}
+cor(predictions, ames10_holdout$Price)^2
+```
+
+Now subtract it from the original multiple $R^{2}$ of the training
+sample to find the shrinkage.
+
+```{r}
+summary(simple_model2)$r.squared - cor(predictions, ames10_holdout$Price)^2
+```
+
+The shrinkage is very small so it appears we are not over fitting our
+training data.
+
 
 #### Part 10. Final Model ####  
 
