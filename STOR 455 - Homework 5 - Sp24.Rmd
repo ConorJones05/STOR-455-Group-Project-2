@@ -129,6 +129,18 @@ first_model <- lm(Price ~ . + I(age_built^2) + I(GarageCars^2)+ I(GarageSF^2)+ T
 summary(first_model)
 ```
 
+#Firstly, we opted to transform the price variable by taking its logarithm. This decision was based on its ability to mitigate the influence of extreme values, thus enhancing the fit of our model, particularly with respect to its curvature.
+
+#Similarly, we applied a logarithmic transformation to the LotArea variable. Our rationale behind this choice stems from observing a curving trend within the data, which logarithmic adjustment tends to alleviate effectively.
+
+#For variables such as age built and garage cars, which exhibited polynomial trends according to our visual inspection of scatter plots, we decided to employ polynomial transformations. This method allowed us to capture the non-linear relationships more accurately, thereby improving the model's performance.
+
+#Additionally, recognizing the high correlation between total rooms and total bedrooms, we deemed it essential to include an interaction term between these two variables. By doing so, we aimed to capture any nuanced interplay between these features, thus enriching the model's predictive capacity.
+
+#Similarly, we identified a significant correlation between lot area and lot frontage, prompting us to incorporate an interaction term for these variables as well. This approach enables us to account for their mutual influence more effectively, enhancing the model's robustness.
+
+#Finally, given the strong correlation between garage cars and garage square footage, we decided to handle them in a similar manner, introducing an interaction term to capture their combined effect accurately.
+
 ```{r}
 MSE2 <- (summary(first_model)$sigma)^2
 
@@ -155,7 +167,7 @@ We will compute the predicted Price for each of the cases in the holdout
 test sample, using our new model.
 
 ```{r}
-predictions <- predict(simple_model2, newdata = ames10_holdout)
+predictions <- predict(simple_model, newdata = ames10_holdout)
 head(predictions)
 ```
 
@@ -207,7 +219,7 @@ Now subtract it from the original multiple $R^{2}$ of the training
 sample to find the shrinkage.
 
 ```{r}
-summary(simple_model2)$r.squared - cor(predictions, ames10_holdout$Price)^2
+summary(simple_model)$r.squared - cor(predictions, ames10_holdout$Price)^2
 ```
 
 The shrinkage is very small so it appears we are not over fitting our
@@ -272,4 +284,3 @@ house_ex <- data.frame(
 ```{r}
 predict.lm(simple_model, house_ex, interval = 'confidence', level = 0.95)
 ```
-
