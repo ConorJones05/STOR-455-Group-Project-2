@@ -14,67 +14,148 @@ __Situation:__ Can we predict the selling price of a house in Ames, Iowa based o
 #### Part 7. Cross-validation: ####
 In some situations, a model might fit the peculiarities of a specific sample of data well, but not reflect structure that is really present in the population. A good test for how your model might work on "real" house prices can be simulated by seeing how well your fitted model does at predicting prices that were NOT in your original sample. This is why we reserved an additional 200 cases as a holdout sample in AmesTest??.csv. Use the group number and AmesTest??.csv corresponding to your group number for homework #3. Import your holdout test data and 
 
-```{r message = FALSE, warning = FALSE}
-library(tidyverse)
+#### Part 8. Find a “fancy model”:
 
-ames_train <- read_csv("AmesTrain10.csv")
-ames_test <- read_csv("AmesTest10.csv")
+Again using AmesTrain??.csv, where ?? corresponds to your new group
+number in homework #5, to build a regression model to predict Price. In
+addition to the quantitative predictors, you may now consider models
+with
+
+#We load in the data and factor our categorical variables. We also
+adjust the #year built/remodel to be years since built/remodel and we
+remove 'order'
+
+```{r}
+AmesTrainingData <- read.csv('AmesTrain10.csv', stringsAsFactors = TRUE)
+AmesTrainingData <- na.omit(AmesTrainingData)
+AmesTrainingData <- AmesTrainingData[-1] 
+age_built <- 2010 - AmesTrainingData$YearBuilt
+age_remodel <- 2010 - AmesTrainingData$YearRemodel
+AmesTrainingData <- subset(AmesTrainingData, select = -c(YearBuilt, YearRemodel))
+
+AmesTrainingData$Quality <- factor(AmesTrainingData$Quality)
+AmesTrainingData$Condition <- factor(AmesTrainingData$Condition)
+```
+
+#we build a full model as a baseline with all of the predictors included. 
+#and we plot each of the predictors against price to see if there are any with clear shape
+
+```{r, fig.show='hide'}
+full_model <- lm(Price ~ ., data=AmesTrainingData)
+summary(full_model)
+plot(Price ~ ., data=AmesTrainingData)
 ```
 
 
-* Compute the predicted Price for each of the cases in the holdout test sample, using your model resulting from the initial fit and residual analysis in parts 1 through 3 of Homework #3. 
+```{r}
+AmesTrainingData_adjusted <- AmesTrainingData %>%
+  mutate(Price = log(Price),
+         LotArea = log(LotArea))
 
-* Compute the residuals for the 200 holdout cases.
+first_model <- lm(Price ~ . + I(age_built^2) + I(GarageCars^2)+ I(GarageSF^2)+ TotalRooms * Bedroom + LotArea * LotFrontage + GarageSF * GarageCars, data = AmesTrainingData_adjusted)
 
-* Compute the mean and standard deviation of these residuals. Are they close to what you expect from the training model?
+summary(first_model)
+```
 
-* Construct a plot of the residuals to determine if they are normally distributed. Is this plot what you expect to see considering the training model?
+#Firstly, we opted to transform the price variable by taking its logarithm. This decision was based on its ability to mitigate the influence of extreme values, thus enhancing the fit of our model, particularly with respect to its curvature.
+# we can check the effectiveness of such transformation by comparing the model with and without:
 
-* Are any holdout cases especially poorly predicted by the training model? If so, identify by the row number(s) in the holdout data. Why might these cases be poorly predicted?
+```{r, echo=TRUE,  results='hide'}
+summary(lm(Price~., AmesTrainingData))
+summary(lm(log(Price)~., AmesTrainingData))
+```
 
-* Compute the correlation between the predicted values and actual prices for the holdout sample. This is known as the cross-validation correlation. We don’t expect the training model to do better at predicting values different from those that were used to build it (as reflected in the original $R^{2}$), but an effective model shouldn’t do a lot worse at predicting the holdout values. Square the cross-validation correlation to get an $R^{2}$ value and subtract it from the original multiple $R^{2}$ of the training sample. This is known as the shrinkage. We won’t have specific rules about how little the shrinkage should be, but give an opinion on whether the shrinkage looks OK to you or too large in your situation. 
+#Similarly, we applied a logarithmic transformation to the LotArea variable. Our rationale behind this choice stems from observing a curving trend within the data, which logarithmic adjustment tends to alleviate effectively. 
 
+#Similarly we found that applying log() to LotArea improves the amount of variability in price that is explained #This process was repeated for other transformations and additions to make sure they will be beneficial
 
-#### Part 8. Find a “fancy model”: #### 
-Again using AmesTrain??.csv, where ?? corresponds to your new group number in homework #5, to build a regression model to predict Price. In addition to the quantitative predictors, you may now consider models with
+#For variables such as age built and garage cars, which exhibited polynomial trends according to our visual inspection of scatter plots, we decided to employ polynomial transformations. This method allowed us to capture the non-linear relationships more accurately, thereby improving the model's performance.
 
-* Categorical variables - Just put these in the model and let R take care of making the indicator predictors (and picking one category to leave out). Use factor( ) to treat a numeric variable as categorical. You’ll see the coefficients for each indicator when you look at the summary( ) and they will be grouped together in the ANOVA. Be careful, since adding a single categorical variable with a lot of categories might actually be adding a lot of new indicator terms.
+#Additionally, recognizing the high correlation between total rooms and total bedrooms, we deemed it essential to include an interaction term between these two variables. By doing so, we aimed to capture any nuanced interplay between these features, thus enriching the model's predictive capacity.
 
-* Transformations of predictors -  You can include functions of quantitative predictors. Probably best to use the I( ) notation so you don’t need to create new columns when you run the predictions for the test data. 
+#Similarly, we identified a significant correlation between lot area and lot frontage, prompting us to incorporate an interaction term for these variables as well. This approach enables us to account for their mutual influence more effectively, enhancing the model's robustness.
 
-* Transformations of the response - You might address curvature or skewness in residual plots by transforming the response prices with a function like log(Price), sqrt(Price), Price^2, etc..  These should generally not need the I( ) notation to make these adjustments. IMPORTANT: If you transform Price, be sure to reverse the transformation when making final predictions!
+#Finally, given the strong correlation between garage cars and garage square footage, we decided to handle them in a similar manner, introducing an interaction term to capture their combined effect accurately.
 
-* Combinations of variables - This might include interactions or other combinations. You do not need the I( ) notation when making an interaction using a categorical predictor (e.g.  GroundSF*CentralAir).
+```{r}
+MSE2 <- (summary(first_model)$sigma)^2
 
-Keep general track of the approaches you try and explain what guides your decisions as you select a new set of predictors (but again you don’t need to give full details of every model you consider). Along the way you should consider some residual analysis. 
+AmesModNone2 <- lm(Price ~ 1, AmesTrainingData_adjusted)
 
-Notes/Tips:
+#step(first_model, scale = MSE2)
+#step(AmesModNone2, scope = list(upper=first_model), scale=MSE2, direction='forward')
+simple_model <- step(AmesModNone2, scale = MSE2, scope = list(upper = first_model), trace = FALSE)
 
-* WARNING: When using a categorical predictor with multiple categories in regsubsets( ), R will create indicators and treat them as separate predictors when deciding which to put into a model. So you might get a model with quantitative predictors like LotArea and GroundSF along with specific indicators like GarageQTA and HouseStyle1Story. This may not be very useful, since we should generally use all indicators for a categorical predictor if we include one in the model. On the other hand, when using the step( ) function, R will generally keep the multiple indicators for different categories of the same variable together as a unit. 
+summary(simple_model)
 
-* In some cases the indicators created for different categorical variables will have identical values.  For example, if you include both GarageC and GarageQ in a model, R will produce values for each of the indicators. The indicators for GarageQNone and GarageCNone (equal to one only for houses that don’t have a garage) will be identical. This may be handled differently in R depending on the procedure. regsubsets( ) may give a “warning” about variables being linearly dependent.  You can still use the results, just be aware that some variables are completely dependent. lm( ) might give output with coefficients (and tests) of some predictors listed as NA.  This is not a problem, R is just automatically deleting one of the redundant variables. If you are predicting for a house with no garage you might have a coefficient to use for GarageQNone but then you don’t need to worry about having one for GarageCNone.
+```
 
-* If your residual analysis from homework #3 or an early model here suggest you might want to do a transformation for the response variable (Price), do so _before_ fitting a lot more models. No sense fine tuning a set of predictors for Price, then deciding you should be predicting log(Price) or Price^2. So make that decision fairly early, but don’t get too picky and expect to get perfect plot of residuals versus fits or an exact normal quantile plot.
+#### Part 9: Cross-validation for your “fancy” model
 
-* Similarly, if you decide that some data cases should be dropped from the training set, don’t wait until late in the process to do so. For example, if you spot a _very_ large residual you should look at the characteristics for that house to see if it should be deleted. Don’t forget about the value of simple plots (like a scatterplot of Price vs. LotArea) for helping to see what is going on and recognize extreme cases. Be sure to document any adjustments you make in the final report. 
+```{r}
+ames10_holdout <- read.csv('AmesTest10.csv')
+ames10_holdout$Quality <- factor(ames10_holdout$Quality)
+ames10_holdout$Condition <- factor(ames10_holdout$Condition)
+```
 
-* Comparing $C_{p}$ from different predictor pools - While Mallow’s $C_{p}$ is a useful tool for comparing models from the same pool of predictors. You should not use it to compare models based on different predictor pools. For example, if you add a bunch of categorical variables to all the quantitative predictors from homework #3 to make a new “full” model, then find $C_{p}$ from a model that you fit in homework #3, it will be worse than it was before. If you look at the formula for calculating $C_{p}$, you will see that all that has changed is MSE for the full model after adding the new batch of predictors.  
+We will compute the predicted Price for each of the cases in the holdout
+test sample, using our new model.
 
-* I should be able to follow the steps you use when selecting a model. I certainly don’t need to see every bit of output, but it might help to include more of the R commands you use. For example, saying you used backward elimination is not very helpful when I don’t know what you start with for the full model or pool of predictors (e.g. did you include Condition and Quality as numeric predictors? or did you decide to eliminate one of GroundSF, FirstSF, or SecondSF due to redundancy?). The easiest way to convey this in many cases is to show the R command you used. It is fine to abbreviate the output (for example, delete many steps in a stepwise procedure using trace=FALSE), but it would be helpful if you identified the parts you do include.  For example, a sentence like “After 12 steps of the stepwise procedure, we have the output below for the fitted model.”  Similarly, I don’t need to see 600 residuals, using head and sort can show the important ones.
+```{r}
+predictions <- predict(simple_model, newdata = ames10_holdout)
+head(predictions)
+```
 
-* Once you have settled on a response, made adjustments to the data (if needed), and chosen a set of predictors, be sure to include the summary( )for your “fancy” model at this stage. 
+As in part 7 we will compute the residuals for the 200 holdout cases.
 
-#### Part 9: Cross-validation for your “fancy” model ####
-    
-Redo the cross-validation analysis with your test data for your new fancy model. Use AmesTest??.csv, where ?? corresponds to your new group number for homework #5. Discuss how the various measures (mean of residuals, std. dev of residuals, shape of the distributions of residuals, cross-validation correlation, and shrinkage) compare to the results you had for your basic model.  Don’t worry about looking for poorly predicted cases this time. If you transformed the response variable, consider how to take this into account for your residual analysis. In order to compare residuals they should have the same units!
+```{r}
+holdout_resid <- log(ames10_holdout$Price) - predictions
+```
 
-Note on missing categories:
+And find the mean and standard deviation of these residuals.
 
->When creating the predictions using predict(yourmodel,AmesTest) you may see an error like:  
+```{r}
+mean(holdout_resid)
+sd(holdout_resid)
+```
 
->Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) :   factor HouseStyle has new levels 1.5Unf, 2.5Fin, 2.5Unf  
-  
->This occurs because the holdout sample has a value for the categorical variable that was not present in your training sample, so there is no indicator in your model to handle that case. To get a prediction for that house, you’ll need to switch the category to one that is in your training data.  In the example above you might choose to replace the “2.5Fin” house style with “2Story”. If you are not sure what category to use, try whatever R uses as the “left out” reference category. Be sure to record any changes like this that you make.
+The mean value of our residuals is incredibly close to zero which is
+ideal. The standard deviation of .0766 seems very low but this is in
+terms of log(Price) which is much smaller than price.
+
+We will construct a plot to determine if they are normally distributed.
+
+```{r}
+qqnorm(holdout_resid)
+qqline(holdout_resid)
+```
+
+The residuals appear much more normally distributed than in previous
+models. There are potentially one or two extreme points.
+
+Compute the correlation between the predicted values and actual prices
+for the holdout sample. This is known as the cross-validation
+correlation.
+
+```{r}
+cor(predictions, ames10_holdout$Price)
+```
+
+Square the cross-validation correlation to get an $R^{2}$ value.
+
+```{r}
+cor(predictions, ames10_holdout$Price)^2
+```
+
+Now subtract it from the original multiple $R^{2}$ of the training
+sample to find the shrinkage.
+
+```{r}
+summary(simple_model2)$r.squared - cor(predictions, ames10_holdout$Price)^2
+```
+
+The shrinkage is very small so it appears we are not over fitting our
+training data.
 
 #### Part 10. Final Model ####  
 
